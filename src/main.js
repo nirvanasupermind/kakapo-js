@@ -8,8 +8,10 @@ function prettyPrint(x) {
 }
 
 function main() {
-  var parser = kakapo.int;
-  prettyPrint(parser.parse("5"));
+  var parser = kakapo.text("Hello World");
+  console.log(kakapo.uint.parse("60")); //=> "60"
+console.log(kakapo.uint.parse("-100")); //=> { error: { index: 0 } }
+console.log(kakapo.uint.parse("a")); //=> { error: { index: 0 } }
 }
 
 main();

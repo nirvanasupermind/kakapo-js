@@ -109,12 +109,12 @@ var kakapo = new (function () {
         return new Parser(function (input) {
             var out1 = self._(input);
             var out2 = other._(input);
-            return (hasError(out1) ? out2 : out1);
+            return (hasError(out1) ? (hasError(out2) ? failure(Math.max(out1.error.index,out2.error.index)) : out2) : out1);
         })
     }
 
     /**
-     * Returns a new parser which succeeds only if parser fails to match. Yields the input text.
+     * Returns a new parser which succeeds only if parser fails to match. Outputs the input text.
      */
     Parser.prototype.not = function () {
         var self = this;
@@ -147,7 +147,7 @@ var kakapo = new (function () {
                 var i = getEnd(self, input.slice(0, temp));
                 var t2 = other.parse(input.slice(i));
                 if (hasError(t2)) {
-                    return { "error": { "index": t2.error.index + i } };
+                    return { "error": { "index": t2.error.index + temp } };
                 } else {
                     return [t1, t2];
                 }
@@ -251,7 +251,7 @@ var kakapo = new (function () {
 
     //public API
     this.Parser = Parser;
-    this.success = success;
+    // this.success = success;
     this.failure = failure;
     this.text = text;
     this.char = char;
