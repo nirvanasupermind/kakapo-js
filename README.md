@@ -1,7 +1,7 @@
 # kakapo-js
 <a href="https://github.com/jneen/parsimmon"><img align="right" src="https://images.immediate.co.uk/production/volatile/sites/4/2019/07/GettyImages-128069181-c-a9ad915.jpg" alt="Kakapo" width="200" height="200"></a>
 Kakapo is a Javascript parser combinator library designed for creating complex grammars. Kakapo is an API, not a code generation tool.
-<br>
+<br><br>
 Kakapo has no run-time dependencies. The Kakapo module is designed to be able to be run from the browser or from Node.js. There are several examples of using Kakapo in the "examples" folder.
 # Load
 It can be loaded using a script tag in an HTML document for the browser
