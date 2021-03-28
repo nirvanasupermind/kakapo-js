@@ -61,7 +61,7 @@ console.log(parser.parse("b")); //=> "bar"
 console.log(parser.parse("c")); //=> { error: { index: 0 } }
 ```
 
-## `kakapo.text(text)`
+## kakapo.text(text)
 Create a parser that matches the text.
 ### Example
 ```js
