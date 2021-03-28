@@ -8,10 +8,9 @@ function prettyPrint(x) {
 }
 
 function main() {
-  var parser = kakapo.text("Hello World");
-  console.log(kakapo.uint.parse("60")); //=> "60"
-console.log(kakapo.uint.parse("-100")); //=> { error: { index: 0 } }
-console.log(kakapo.uint.parse("a")); //=> { error: { index: 0 } }
+  var parser = kakapo.text("quux").not();
+  console.log(parser.parse("z")); //=> "z"
+  console.log(parser.parse("quux")); //=> { error: { index: 3 } }
 }
 
 main();

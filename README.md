@@ -1,6 +1,8 @@
 # kakapo-js
 Kakapo is a Javascript parser combinator library designed for creating complex grammars. Kakapo is an API, not a code generation tool.
 <br>
+![Image of Kakapo](https://images.immediate.co.uk/production/volatile/sites/4/2019/07/GettyImages-128069181-c-a9ad915.jpg =260x260)
+<br>
 Kakapo has no run-time dependencies. The Kakapo module is designed to be able to be run from the browser or from Node.js. There are several examples of using Kakapo in the "examples" folder.
 # Load
 It can be loaded using a script tag in an HTML document for the browser
@@ -80,9 +82,18 @@ console.log(kakapo.uint.parse("a")); //=> { error: { index: 0 } }
 
 
 ## Parser methods
+### parser.not()
+Returns a new parser which succeeds only if `parser`a fails to match. Outputs the input text.
 
+#### Example
+```js
+var parser = kakapo.text("quux").not();
+console.log(parser.parse("z")); //=> "z"
+console.log(parser.parse("quux")); //=> { error: { index: 3 } }
+
+```
 # Minification
-For convenience I am providing a minified/obfuscated version src/kakapo.min.js that is being generated with uglify.js.
+For convenience I am providing a minified/obfuscated version `src/kakapo.min.js` that is being generated with uglify.js.
 
 # License
 Kakapo is licensed under the MIT License.
