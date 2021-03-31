@@ -1,4 +1,5 @@
 # kakapo-js
+[![npm version](https://badge.fury.io/js/kakapo-js.svg)](https://badge.fury.io/js/kakapo-js)<br>
 <a href="https://github.com/nirvanasupermind/kakapo-js"><img align="right" src="https://images.immediate.co.uk/production/volatile/sites/4/2019/07/GettyImages-128069181-c-a9ad915.jpg" alt="Kakapo" width="200" height="120"></a>
 Kakapo is a Javascript parser combinator library designed for creating complex grammars. Kakapo is an API, not a code generation tool.
 
