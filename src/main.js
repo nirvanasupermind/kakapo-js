@@ -9,8 +9,8 @@ function prettyPrint(x) {
 
 //Driver code
 function main() {
-var parser1 = kakapo.text('a').zeroOrMore();
-console.log(parser1._("aa"));
+var parser1 = kakapo.text('ab').oneOrMore();
+console.log(parser1._("abab"));
   // var parser = kakapo.text("foo")
   //   .or(kakapo.text("bar"));
   // console.log(parser.parse("foo")); //=> "foo"

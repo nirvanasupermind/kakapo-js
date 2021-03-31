@@ -99,14 +99,14 @@ var kakapo = new (function () {
             while (true) {
                 count++;
                 var temp = self._(input.substring(i));
-                if(count === max)
-                    return failure(temp.error.index+i);
-                    
-                
+                if (count === max)
+                    return failure(temp.error.index + i);
+
+
                 if (hasErrors(temp)) {
                     var idx = temp.error.index;
                     end += idx;
-                    if (idx+i >= input.length) {
+                    if (idx + i >= input.length) {
                         break;
                     } else {
                         i = idx;
@@ -119,8 +119,8 @@ var kakapo = new (function () {
                 }
             }
 
-            
-            return success(accum,0,end+1);
+
+            return success(accum, 0, end + 1);
         })
     }
 
@@ -128,8 +128,14 @@ var kakapo = new (function () {
     * Attempts to apply the parser 1 or more times.
     */
     Parser.prototype.oneOrMore = function () {
-        return this.then(this.zeroOrMore())
-            .transform((results) => results[0].concat(results[1]));
+        var self = this;
+        return new Parser(function (input) {
+            if (input === "") {
+                return failure(0);
+            } else {
+                return self.zeroOrMore()._(input);
+            }
+        })
     }
 
     /**
@@ -148,7 +154,7 @@ var kakapo = new (function () {
      */
     Parser.prototype.delimited = function (delimiter) {
         return this.then(delimiter.then(this).zeroOrMore())
-                    .transform((results) => [results[0],...results[1].map((e) => e[1])])
+            .transform((results) => [results[0], ...results[1].map((e) => e[1])])
     }
 
     ////////////////////////////////////////////

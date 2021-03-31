@@ -170,7 +170,7 @@ console.log(parser.parse("foo")); //=> { error: { index: 0 } }
 ```
 
 ## parser.zeroOrMore()
-Attempts to apply the parser 1 or more times.
+Attempts to apply the parser 0 or more times.
 #### Example
 ```js
 var parser = kakapo.char("ac").zeroOrMore();
