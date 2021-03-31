@@ -115,7 +115,7 @@ console.log(parser.parse("ab")); //=> { error: { index: 1 } }
 ### parser.or(other)
 Returns a new parser which tries `parser` and, if it fails, tries `other`.
 
-### Example
+#### Example
 ```js
 var parser = kakapo.text("foo")
                    .or(kakapo.text("bar"));
@@ -127,10 +127,10 @@ console.log(parser.parse("baz")); //=> { error: { index: 2 } }
 ## parser.parse(input)
 Parses a string. If successful, outputs the parsed result. If unsuccessful, outputs an error object of the form `{"error":{"index":index}}`.
 
-## parser.quantified(min,max)
+### parser.quantified(min,max)
 Attempts to apply a parser between min and max number of times inclusive. 
 
-### Example
+#### Example
 ```js
 var parser = kakapo.text("no").quantified(1,3);
 console.log(parser.parse("")); //=> { error: { index: 0 } }
@@ -141,18 +141,18 @@ console.log(parser.parse("nononono")); //=> { error: { index: 2 } }
 console.log(parser.parse("mo")); //=> { error: { index: 0 } }
 ```
 
-## parser.repeat(count)
+### parser.repeat(count)
 Attempts to apply a parser a precise number of times.
-### Example
+#### Example
 ```js
 var parser = kakapo.text("a").repeat(2);
 console.log(parser.parse("aa")); //=> ["a","a"]
 console.log(parser.parse("ab")); //=> { error: { index: 1 } }
 ```
 
-## parser.then(other)
+### parser.then(other)
 Matches two parsers in order. 
-### Example
+#### Example
 ```js
 var parser = kakapo.text("b").then(kakapo.text("c"));
 console.log(parser.parse("bc")); //=> ["b","c"]
@@ -160,9 +160,9 @@ console.log(parser.parse("bd")); //=> { error: { index: 1 } }
 console.log(parser.parse("cb")); //=> { error: { index: 0 } }
 ```
 
-## parser.transform(fn)
+### parser.transform(fn)
 Transforms the output of `parser` with the given function.
-### Example
+#### Example
 ```js
 var parser = kakapo.text("050").transform(parseFloat);
 console.log(parser.parse("050")); //=> 50
