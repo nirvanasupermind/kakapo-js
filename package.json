@@ -1,6 +1,6 @@
 {
   "name": "kakapo-js",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Javascript parser combinator library",
   "main": "src/kakapo.js",
   "directories": {
