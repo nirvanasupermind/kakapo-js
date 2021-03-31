@@ -24,25 +24,31 @@ Succeeds if one of the characters are present.
 ```js
 var parser = kakapo.char("0123456789abc");
 console.log(parser.parse("a")); //=> "a"
-console.log(parser.parse("bob")); //=> { error: { index: 1 } }
+console.log(parser.parse("bob")); //=> { error: { index: 0 } }
 ```
+
+## `kakapo.delay(fn)`
+Creates a parser that is defined from a function that generates the parser. This is useful for referencing parsers that haven't yet been defined, and for implementing recursive parsers.
+### Example
+```js
+var parser1 = kakapo.delay(() => kakapo.text("a").then(parser2));
+var parser2 = kakapo.text("b");
+console.log(parser1.parse("ab")); //=> ["a","b"]
+```
+
 ## kakapo.failure(index)
 Generates an object of the form `{"error":{"index":index}}`. Used in [kakapo.Parser(fn)](#kakapoparserfn).
 ### Example
 ```js
 console.log(kakapo.failure(2)); //=> { error: { index: 2 } }
 ```
-## kakapo.int
-Matches a signed integer literal.
+
+## kakapo.success(value,start,end)
+Generates an object of the form `{"value":value,"start":start,"end":end}`. Used inside [kakapo.Parser(fn)](#kakapoparserfn).
 ### Example
 ```js
-console.log(kakapo.int.parse("-9")); //=> "-9"
-console.log(kakapo.int.parse("08")); //=> { error: { index: 1 } }
-console.log(kakapo.int.parse("a")); //=> { error: { index: 0 } }
+console.log(kakapo.success("a",0,1)); //=> { value: 'a', start: 0, end: 1 }
 ```
-
-
-
 
 ## kakapo.Parser(fn)
 Creates a primitive parser.
@@ -50,16 +56,16 @@ Creates a primitive parser.
 ```js
 var parser = new kakapo.Parser(function (input) {
    if(input === "a") {
-       return "foo";
+       return kakapo.success("a",0,1);
    } else if(input === "b") {
-       return "bar";
+       return kakapo.success("b",0,1);
    } else {
        return kakapo.failure(0);
    }
 });
 
-console.log(parser.parse("a")); //=> "foo"
-console.log(parser.parse("b")); //=> "bar"
+console.log(parser.parse("a")); //=> "a"
+console.log(parser.parse("b")); //=> "b"
 console.log(parser.parse("c")); //=> { error: { index: 0 } }
 ```
 
@@ -72,26 +78,108 @@ console.log(parser.parse("Hello World")); //=> "Hello World"
 console.log(parser.parse("nice")); //=> { error: { index: 0 } }
 ```
 
-## kakapo.uint
-Matches an unsigned integer literal.
-### Example
-```js
-console.log(kakapo.uint.parse("60")); //=> "60"
-console.log(kakapo.uint.parse("a")); //=> { error: { index: 0 } }
-```
-
-
 ## Parser methods
-### parser.not()
-Returns a new parser which succeeds only if `parser`a fails to match. Outputs the input text.
+### parser.delimited(delimiter)
 
 #### Example
 ```js
-var parser = kakapo.text("quux").not();
-console.log(parser.parse("z")); //=> "z"
-console.log(parser.parse("quux")); //=> { error: { index: 3 } }
-
+var parser = kakapo.text("a").delimited(kakapo.text(","));
+console.log(parser.parse("")); //=> []
+console.log(parser.parse("a")); //=> ["a"]
+console.log(parser.parse("a,a")); //=> ["a","a"]
+console.log(parser.parse("b")); //=> { error: { index: 0 } }
 ```
+
+### parser.oneOrMore()
+Attempts to apply the parser 1 or more times.
+#### Example
+```js
+var parser = kakapo.char("yz").oneOrMore();
+console.log(parser.parse("")); //=> { error: { index: 0 } }
+console.log(parser.parse("y")); //=> ["y"]
+console.log(parser.parse("zy")); //=> ["z","y"]
+console.log(parser.parse("wy")); //=> { error: { index: 0 } }
+```
+
+### parser.opt()
+Attempts to match a parser 0 or 1 times.
+#### Example
+```js
+var parser = kakapo.text("a").opt();
+console.log(parser.parse("")); //=> ""
+console.log(parser.parse("a")); //=> "a"
+console.log(parser.parse("ab")); //=> { error: { index: 1 } }
+```
+
+### parser.or(other)
+Returns a new parser which tries `parser` and, if it fails, tries `other`.
+
+### Example
+```js
+var parser = kakapo.text("foo")
+                   .or(kakapo.text("bar"));
+console.log(parser.parse("foo")); //=> "foo"
+console.log(parser.parse("bar")); //=> "bar"
+console.log(parser.parse("baz")); //=> { error: { index: 2 } }
+```
+
+## parser.parse(input)
+Parses a string. If successful, outputs the parsed result. If unsuccessful, outputs an error object of the form `{"error":{"index":index}}`.
+
+## parser.quantified(min,max)
+Attempts to apply a parser between min and max number of times inclusive. 
+
+### Example
+```js
+var parser = kakapo.text("no").quantified(1,3);
+console.log(parser.parse("")); //=> { error: { index: 0 } }
+console.log(parser.parse("no")); //=> ["no"]
+console.log(parser.parse("nono")); //=> ["no","no"]
+console.log(parser.parse("nonono")); //=> ["no","no","no"]
+console.log(parser.parse("nononono")); //=> { error: { index: 2 } }
+console.log(parser.parse("mo")); //=> { error: { index: 0 } }
+```
+
+## parser.repeat(count)
+Attempts to apply a parser a precise number of times.
+### Example
+```js
+var parser = kakapo.text("a").repeat(2);
+console.log(parser.parse("aa")); //=> ["a","a"]
+console.log(parser.parse("ab")); //=> { error: { index: 1 } }
+```
+
+## parser.then(other)
+Matches two parsers in order. 
+### Example
+```js
+var parser = kakapo.text("b").then(kakapo.text("c"));
+console.log(parser.parse("bc")); //=> ["b","c"]
+console.log(parser.parse("bd")); //=> { error: { index: 1 } }
+console.log(parser.parse("cb")); //=> { error: { index: 0 } }
+```
+
+## parser.transform(fn)
+Transforms the output of `parser` with the given function.
+### Example
+```js
+var parser = kakapo.text("050").transform(parseFloat);
+console.log(parser.parse("050")); //=> 50
+console.log(parser.parse("foo")); //=> { error: { index: 0 } }
+```
+
+## parser.zeroOrMore()
+Attempts to apply the parser 1 or more times.
+#### Example
+```js
+var parser = kakapo.char("ac").zeroOrMore();
+console.log(parser.parse("")); //=> []
+console.log(parser.parse("a")); //=> ["a"]
+console.log(parser.parse("ac")); //=> ["a","c"]
+console.log(parser.parse("ad")); //=> { error: { index: 1 } }
+```
+
+
 # Minification
 For convenience I am providing a minified/obfuscated version `src/kakapo.min.js` that is being generated with uglify.js.
 

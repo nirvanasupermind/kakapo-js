@@ -1,76 +1,7 @@
 "use strict";
+Array.prototype.flat || (Array.prototype.flat = function (t, r) { return r = this.concat.apply([], this), t > 1 && r.some(Array.isArray) ? r.flat(t - 1) : r }, Array.prototype.flatMap = function (t, r) { return this.map(t, r).flat() })
 //Kakapo namespace
 var kakapo = new (function () {
-    ////////////////////////////////////////////
-    //HELPERS
-    const MAX_VALUE = 1500;
-    function getEnd(parser, input) {
-        var i = 0;
-        while (i < input.length && hasError(parser._(input.slice(0, i)))) {
-            i++;
-        }
-
-        return i;
-    }
-
-    //taken from https://stackoverflow.com/questions/11409895/whats-the-most-elegant-way-to-cap-a-number-to-a-segment
-    function clamp(num, min, max) {
-        return num <= min ? min : num >= max ? max : num;
-    }
-
-    function getStart(parser, input) {
-        var i = input.length - 1;
-        while (i >= 0 && hasError(parser._(input.slice(0, i)))) {
-            i--;
-        }
-        i++;
-        return i;
-    }
-
-    function hasError(output) {
-        return output && typeof output === 'object' && output.error;
-    }
-
-
-
-    /**
-   * Generates an object of the form {"value":value,"start":start,"end":end}. 
-   * @param {*} value
-   * @param {number} start
-   * @param {number} end 
-   */
-    function success(value, start, end) {
-        return { "value": value, "start": start, "end": end };
-    }
-
-    /**
-     * Generates an object of the form {"error":{"index":index}}. Used in Parser(_).
-     * @param {number} index 
-     */
-    function failure(index) {
-        return { "error": { "index": Number.parseFloat(index) } };
-    }
-
-
-    function hasError(output) {
-        return output && output.error;
-    }
-
-    function repeat(parser, amount) {
-        if (amount === 0) {
-            //0 repeats is empty string
-            return text("").transform(() => []);
-        } else {
-            var result = parser;
-            for (var i = 0; i < amount - 1; i++) {
-                result = result.then(parser);
-            }
-
-            return result.transform((results) => Array.isArray(results) ? [].concat.apply([], results) : [results])
-        }
-    }
-
-
     ////////////////////////////////////////////
     //PARSER
     /**
@@ -82,46 +13,24 @@ var kakapo = new (function () {
 
     /**
      * Parses a string.
-     * If successful, outputs the parsed AST.
+     * If successful, outputs the parsed result.
      * If unsuccessful, outputs an error object of the form {"error":{"index":index}}.
      */
     Parser.prototype.parse = function (input) {
-        input = "" + input; //convert the input to string
+        input = String(input); //Convert the input to a string
+        if (typeof this._(input).value !== "undefined")
+            return this._(input).value;
         return this._(input);
     }
 
     /**
-     * Transforms the output of the parser with the given function.
-     */
-    Parser.prototype.transform = function (fn) {
-        var self = this;
-        return new Parser(function (input) {
-            var output = self._(input);
-            return (hasError(output) ? output : fn(output));
-        })
-    }
-
-    /**
-     * Tries each parser in order until one succeeds. 
+     * Returns a new parser which tries parser and, if it fails, tries other.
      */
     Parser.prototype.or = function (other) {
         var self = this;
         return new Parser(function (input) {
-            var out1 = self._(input);
-            var out2 = other._(input);
-            return (hasError(out1) ? (hasError(out2) ? failure(Math.max(out1.error.index,out2.error.index)) : out2) : out1);
-        })
-    }
-
-    /**
-     * Returns a new parser which succeeds only if parser fails to match. Outputs the input text.
-     */
-    Parser.prototype.not = function () {
-        var self = this;
-        return new Parser(function (input) {
-            var output = self._(input);
-            return (hasError(output) ? input : failure(getEnd(self, input) - 1));
-        })
+            return hasErrors(self._(input)) ? other._(input) : self._(input);
+        });
     }
 
 
@@ -131,34 +40,29 @@ var kakapo = new (function () {
     Parser.prototype.then = function (other) {
         var self = this;
         return new Parser(function (input) {
-            //EXAMPLE: (("a" then "b") then "c")
-            var temp = getStart(self, input) - 1;
-            //temp: the index where the "c" parser is valid
-            //0: input="abc" - FAILURE
-            //1: input="bc" - FAILURE
-            //2: input="c" - MATCH
-            var newInput = input.slice(0, temp)
-            var t1 = self.parse(newInput);
-            // console.log("*****CALLING THEN WITH ARGUMENTS: ("+[self.name,other.name]+")")
-            // console.log("VARIABLES: ",{input,temp,newInput,t1},"\n");
-            if (hasError(t1)) {
-                return failure(getEnd(self, input) - 1);
-            } else {
-                var i = getEnd(self, input.slice(0, temp));
-                var t2 = other.parse(input.slice(i));
-                if (hasError(t2)) {
-                    return { "error": { "index": t2.error.index + temp } };
-                } else {
-                    return [t1, t2];
-                }
+            // console.log(self._("ab"),other._("c"));
+            var i = 0;
+            while (i < input.length && hasErrors(other._(input.substring(i)))) {
+                i++;
             }
+
+
+            var t1 = self._(input.substring(0, i));
+            var t2 = other._(input.substring(i));
+
+            if (hasErrors(t1))
+                return t1;
+            if (hasErrors(t2))
+                return failure(t2.index + i);
+            return success([t1.value, t2.value], t1.start, t2.end + i);
         })
     }
 
+
     /**
-     *  Attempts to apply a parser between min and max number of times inclusive. 
-     */
-    Parser.prototype.quantified = function (min, max = min) {
+     * Attempts to apply a parser between min and max number of times inclusive. 
+    */
+    Parser.prototype.quantified = function (min, max) {
         var result = repeat(this, min);
         for (var i = min + 1; i <= max; i++) {
             result = result.or(repeat(this, i));
@@ -167,47 +71,118 @@ var kakapo = new (function () {
         return result;
     }
 
-
-    /**
-     * Attempts to apply the parser 0 or more times.
-     */
-    Parser.prototype.zeroOrMore = function (max = MAX_VALUE) {
-        return this.quantified(0, max);
+    /** 
+     * Attempts to apply a parser a precise number of times.
+    */
+    Parser.prototype.repeat = function (count) {
+        return this.quantified(count, count);
     }
 
-    /**
-     * Attempts to apply the parser 1 or more times.
-     */
+    /** 
+    * Attempts to match a parser 0 or 1 times.
+    */
+    Parser.prototype.opt = function (count) {
+        return text("").or(this);
+    }
+
+    /** 
+    * Attempts to apply the parser 0 or more times.
+    */
+    Parser.prototype.zeroOrMore = function () {
+        var self = this;
+        return new Parser(function (input) {
+            var i = 0;
+            var accum = [];
+            var end = 0;
+            var count = 0;
+            const max = 5000;
+            while (true) {
+                count++;
+                var temp = self._(input.substring(i));
+                if(count === max)
+                    return failure(temp.error.index+i);
+                    
+                
+                if (hasErrors(temp)) {
+                    var idx = temp.error.index;
+                    end += idx;
+                    if (idx+i >= input.length) {
+                        break;
+                    } else {
+                        i = idx;
+                    }
+
+                    accum.push(self._(input.substring(i)).value);
+                } else {
+                    accum.push(self._(input.substring(i)).value);
+                    break;
+                }
+            }
+
+            
+            return success(accum,0,end+1);
+        })
+    }
+
+    /** 
+    * Attempts to apply the parser 1 or more times.
+    */
     Parser.prototype.oneOrMore = function () {
-        return this.quantified(1, MAX_VALUE + 1);
+        return this.then(this.zeroOrMore())
+            .transform((results) => results[0].concat(results[1]));
     }
 
-    // /**
-    //  * Attempts to match a rule 0 or 1 times. 
-    //  */
-    // Parser.prototype.opt = function () {
-    //     return text("").or(this);
-    // }
+    /**
+     * Transforms the output of the parser with the given function.
+    */
+    Parser.prototype.transform = function (fn) {
+        var self = this;
+        return new Parser(function (input) {
+            var output = self._(input);
+            return (hasErrors(output) ? output : success(fn(output.value), output.start, output.end));
+        })
+    }
 
+    /**
+     * Repeats a parser zero or more times, with a delimiter between each one. 
+     */
+    Parser.prototype.delimited = function (delimiter) {
+        return this.then(delimiter.then(this).zeroOrMore())
+                    .transform((results) => [results[0],...results[1].map((e) => e[1])])
+    }
 
     ////////////////////////////////////////////
     //FACTORY METHODS
+    /**
+     * Creates a parser that is defined from a function that generates the parser. 
+     * This allows two rules to have a cyclic relation. 
+     * @param {function} fn 
+     */
+    function delay(fn) {
+        var parser = new kakapo.Parser(function (input) {
+            parser._ = fn()._;
+            return parser._(input);
+        });
+
+        return parser;
+    }
     /**
      * Create a parser that matches the text.
      * @param {string} text 
      */
     function text(text) {
-        text = "" + text;
+        text = String(text); //make the text a string
         return new Parser(function (input) {
             if (input === text) {
-                return text;
+                return success(text, 0, text.length);
             } else {
-                //retrieve the index
-                var index = input
-                    .split("")
-                    .filter((_, idx) => input.charAt(idx) !== text.charAt(idx));
-                index = input.indexOf(index[0]);
-                return failure(index);
+                //extract the index
+                var i = 0;
+                while (input.charAt(i) === text.charAt(i) && i < Math.max(input.length, text.length)) {
+                    i++;
+                }
+
+                return failure(i);
             }
         });
     }
@@ -226,41 +201,57 @@ var kakapo = new (function () {
         return result;
     }
 
-    /**
-     * Matches an unsigned integer literal.
-     */
-    var uint = char("123456789")
-        .then(char("0123456789").zeroOrMore())
-        .transform((results) => [results[0],results[1].join("")].join(""))
-        .or(text("0"));
+
+
+    ////////////////////////////////////////////
+    //HELPERS
+    const MAX_VALUE = 11;
 
     /**
-     * Matches a signed integer literal.
+     * Returns the object {"value":value,"start":start,"end":end}. Used inside Parser(_).
+     * @param {*} value 
+     * @param {number} start 
+     * @param {number} end 
      */
-    var int = char("-+")
-              .then(uint)
-              .transform((results) => results.join(""))
-              .or(uint);
-    
-    // /**
-    //  * Matches a floating point literal.
-    //  */
-    // var float = char("0123456789")
-    //     .oneOrMore()
-    //     .transform((results) => results.join(""));
+    function success(value, start, end) {
+        return { "value": value, "start": parseFloat(start), "end": parseFloat(end) };
+    }
 
-    //public API
+    /**
+     * Returns the object {"error":{"index":index}}. Used inside Parser(_).
+     */
+    function failure(index) {
+        return { "error": { "index": parseFloat(index) } };
+    }
+
+    function hasErrors(o) {
+        return o && o.error;
+    }
+
+    function repeat(a, b) {
+        if (b === 0) {
+            return text("").transform(() => []);
+        } else if (b === 1) {
+            return a.transform((results) => [results]);
+        } else {
+            var result = a.then(a);
+            for (var i = 2; i < b; i++) {
+                result = result.then(a).transform((results) => [...results[0], ...results.slice(1)]);
+            }
+
+            return result;
+        }
+    }
+
+
+
     this.Parser = Parser;
-    // this.success = success;
-    this.failure = failure;
     this.text = text;
     this.char = char;
-    this.uint = uint;
-    this.int = int;
-    // this.float = float;
-
-
-})
+    this.success = success;
+    this.failure = failure;
+    this.delay = delay;
+})();
 
 //Module exports.
 if (typeof module === "object" && module.exports) {

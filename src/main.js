@@ -7,10 +7,16 @@ function prettyPrint(x) {
   console.log(s);
 }
 
+//Driver code
 function main() {
-  var parser = kakapo.text("quux").not();
-  console.log(parser.parse("z")); //=> "z"
-  console.log(parser.parse("quux")); //=> { error: { index: 3 } }
+var parser1 = kakapo.text('a').zeroOrMore();
+console.log(parser1._("aa"));
+  // var parser = kakapo.text("foo")
+  //   .or(kakapo.text("bar"));
+  // console.log(parser.parse("foo")); //=> "foo"
+  // console.log(parser.parse("bar")); //=> "bar"
+  // console.log(parser.parse("baz"));
+
 }
 
 main();
