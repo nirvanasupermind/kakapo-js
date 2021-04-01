@@ -10,8 +10,11 @@ function prettyPrint(x) {
 
 //Driver code
 function main() {
-  var parser1 = kakapo.text("ab").zeroOrMore();
-  console.log(parser1.parse("abc"));
+var parser = kakapo.char("ac").zeroOrMore();
+console.log(parser.parse("")); //=> []
+console.log(parser.parse("a")); //=> ["a"]
+console.log(parser.parse("ac")); //=> ["a","c"]
+console.log(parser.parse("ad")); //=> { error: { index: 1 } }
 }
 
 main();

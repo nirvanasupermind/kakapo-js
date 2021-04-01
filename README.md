@@ -177,7 +177,7 @@ var parser = kakapo.char("ac").zeroOrMore();
 console.log(parser.parse("")); //=> []
 console.log(parser.parse("a")); //=> ["a"]
 console.log(parser.parse("ac")); //=> ["a","c"]
-console.log(parser.parse("ad")); //=> { error: { index: 1 } }
+console.log(parser.parse("ad")); //=> { error: { index: 0 } }
 ```
 
 
