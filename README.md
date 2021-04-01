@@ -169,7 +169,7 @@ console.log(parser.parse("050")); //=> 50
 console.log(parser.parse("foo")); //=> { error: { index: 0 } }
 ```
 
-## parser.zeroOrMore()
+### parser.zeroOrMore()
 Attempts to apply the parser 0 or more times.
 #### Example
 ```js

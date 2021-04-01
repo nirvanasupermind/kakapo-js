@@ -1,6 +1,7 @@
 /**
- * This parser supports basic math with + - * / %, unary negation, and,
- * square root. It outputs an S-expression.
+ * This parser supports basic math with + - * / %.
+ * It outputs an S-expression.
+ * Does not support braces or negative numbers (yet).
  */
 
 //Import kakapo
@@ -33,28 +34,35 @@ var g = new (function () {
     //                                     .then(")")
     //                                     .transform((results) => results[0][1]));
 
+    //A modulo term.
+    this.modTerm = this.float;
+
     //A division term.
-    this.divTerm = this.float;
+    this.divTerm = this.modTerm.delimited(kakapo.text("%"))
+        .transform((results) => results.length === 1 ? results[0] : ["%"].concat(results))
 
     //A multiplication term.
     this.mulTerm = this.divTerm.delimited(kakapo.text("/"))
         .transform((results) => results.length === 1 ? results[0] : ["/"].concat(results));
     //A subtraction term.
     this.subTerm = this.mulTerm.delimited(kakapo.text("*"))
-         .transform((results) => results.length === 1 ? results[0] : ["*"].concat(results));
+        .transform((results) => results.length === 1 ? results[0] : ["*"].concat(results));
 
     //An addition term.
     this.addTerm = this.subTerm.delimited(kakapo.text("-"))
         .transform((results) => results.length === 1 ? results[0] : ["-"].concat(results));
 
+    //Main entry point.
+    this.expr = self.addTerm.delimited(kakapo.text("+")).transform((results) => results.length === 1 ? results[0] : ["+"].concat(results));
+
+
 
 })();
 
-
 //Driver code
 function main() {
-    var str = "2-3";
-    console.log(g.subTerm.parse(str));
+    var str = "8%3+1";
+    console.log(g.expr.parse(str));
 }
 
 main();
