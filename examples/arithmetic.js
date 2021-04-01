@@ -31,7 +31,7 @@ var g = new (function () {
     // Recursive definition of a expression in parantheses.
     // this.parenExpr = kakapo.delay(() => kakapo.text("(")
     //                                     .then(self.expr)
-    //                                     .then(")")
+    //                                     .then(kakapo.text(")"))
     //                                     .transform((results) => results[0][1]));
 
     //A modulo term.
